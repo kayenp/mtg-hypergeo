@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chartGeometry, nearestIndex } from '../src/core/chart.ts';
+import { averageGeometry, chartGeometry, nearestIndex } from '../src/core/chart.ts';
 
 const size = { width: 600, height: 300 };
 
@@ -87,4 +87,68 @@ test('nearestIndex snaps a pointer x to the closest turn', () => {
   assert.equal(nearestIndex(g, xs[2]! + 1), 2);
   assert.equal(nearestIndex(g, (xs[3]! + xs[4]!) / 2 + 1), 4);
   assert.equal(nearestIndex(g, 10000), 4);
+});
+
+const avgRows = (n: number, perTurn: (t: number) => number[]) =>
+  Array.from({ length: n }, (_, i) => ({ turn: i + 1, copies: perTurn(i + 1) }));
+
+test('average panel, one group: points scale from 0 to a round maximum in cards [R13]', () => {
+  const rows = avgRows(10, (t) => [((6 + t) * 24) / 60]);
+  const g = averageGeometry(rows, ['Lands'], size);
+  assert.equal(g.series.length, 1);
+  assert.equal(g.max, 8);
+  assert.deepEqual(g.yTicks.map((t) => t.label), ['0', '2', '4', '6', '8']);
+  const first = g.series[0]!.points[0]!;
+  assert.equal(first.y, Math.round((g.plot.bottom - (g.plot.bottom - g.plot.top) * (2.8 / 8)) * 100) / 100);
+  assert.equal(g.series[0]!.name, 'Lands');
+  assert.match(g.description, /Lands: 2\.80 at turn 1, 6\.40 at turn 10/);
+});
+
+test('average panel shares the turn axis with the odds chart [R13]', () => {
+  const odds = Array.from({ length: 10 }, (_, i) => ({ turn: i + 1, withMulligan: 0.5, noMulligan: 0.4 }));
+  const a = chartGeometry(odds, size);
+  const b = averageGeometry(avgRows(10, () => [1, 2]), ['A', 'B'], size);
+  assert.equal(b.series.length, 2);
+  assert.deepEqual(b.xTicks, a.xTicks);
+  assert.deepEqual(b.plot.left, a.plot.left);
+  assert.deepEqual(b.plot.right, a.plot.right);
+  assert.deepEqual(b.series[0]!.points.map((p) => p.x), a.series[0]!.points.map((p) => p.x));
+});
+
+test('average panel, six groups: six styles, no direct labels, the legend carries the names [R13]', () => {
+  const names = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const g = averageGeometry(avgRows(5, (t) => names.map((_, i) => t * (i + 1) * 0.1)), names, size);
+  assert.equal(g.series.length, 6);
+  assert.deepEqual(g.series.map((s) => s.style), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(g.endLabels, []);
+  for (const n of names) assert.match(g.description, new RegExp(`${n}: `));
+});
+
+test('average panel, a group with 0 copies sits on the baseline [R13]', () => {
+  const g = averageGeometry(avgRows(4, () => [1.5, 0]), ['A', 'None'], size);
+  assert.equal(g.series.length, 2);
+  assert.ok(g.series[1]!.points.every((p) => p.y === g.plot.bottom));
+});
+
+test('average panel, all zero still has a scale [R13]', () => {
+  const g = averageGeometry(avgRows(3, () => [0]), ['None'], size);
+  assert.ok(g.max > 0);
+  assert.equal(g.yTicks[0]!.label, '0');
+});
+
+test('average panel, a single turn sits in the middle [R13]', () => {
+  const g = averageGeometry(avgRows(1, () => [2.8]), ['Lands'], size);
+  assert.equal(g.series.length, 1);
+  assert.equal(g.series[0]!.points[0]!.x, (g.plot.left + g.plot.right) / 2);
+  assert.equal(g.xTicks.length, 1);
+});
+
+test('average panel, two to four groups get direct end labels when apart, cut to fit [R13]', () => {
+  const long = 'A very long group name that goes on';
+  const g = averageGeometry(avgRows(5, (t) => [t, t * 0.2]), [long, 'B'], size);
+  assert.deepEqual(g.endLabels.map((l) => l.index), [0, 1]);
+  assert.ok(g.endLabels[0]!.text.length <= 14, g.endLabels[0]!.text);
+  assert.ok(g.endLabels[0]!.text.endsWith('…'));
+  const narrow = averageGeometry(avgRows(5, (t) => [t, t * 0.2]), ['A', 'B'], { width: 360, height: 220 });
+  assert.deepEqual(narrow.endLabels, []);
 });
