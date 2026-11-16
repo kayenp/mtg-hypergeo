@@ -61,9 +61,16 @@ The project uses option 1, and the owner chose GitHub Pages in addition to the f
   - `actions/upload-pages-artifact` v5.0.0: `fc324d3547104276b827a68afc52ff2a11cc49c9`
   - `actions/deploy-pages` v5.0.1: `368f82528645a54fb793d4d04e342629a3f51346`
 - GitHub Pages on a private repository needs a paid plan. A public repository is free.
-- Unverified: the Pages workflow did not run, because the owner did not push yet. Also unverified: that the
-  `ubuntu-latest` runner has Chrome on the PATH for the smoke test. If it does not, set `CHROME_BIN` in the
-  workflow, or add a step that installs Chrome.
+- The Pages workflow ran on 2026-11-15. Run 43800050297 (`workflow_dispatch` on `main`) passed the build job
+  and the deploy job.
+- `npm run check` passed on the `ubuntu-latest` runner. Thus that runner has Chrome on the PATH for the smoke
+  test, and the workflow does not set `CHROME_BIN`.
+- The live page is `https://kayenp.github.io/mtg-hypergeo/`. The served file was byte-identical to the local
+  `dist/index.html`. The share link for 4 copies in 60 cards showed `39.95%` on the live page.
+- The first run (43799604018, a push to `main`) passed the build job two times, but its deploy job failed two
+  times. The message was "The job was not started because it repeatedly failed to be acquired (5 attempts)."
+  GitHub gave no runner to the job, and the GitHub status page showed no incident. The cause is unknown.
+  A new run with `gh workflow run pages.yml --ref main` passed. If this occurs again, start a new run.
 
 ## Revisit if
 
