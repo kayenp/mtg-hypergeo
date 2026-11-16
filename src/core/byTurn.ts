@@ -74,3 +74,23 @@ export function byTurn(inputs: Inputs): TurnRow[] {
     };
   });
 }
+
+export interface AverageRow {
+  turn: number;
+  draws: number;
+  /** Average copies seen of each group, in the order of the groups. */
+  copies: number[];
+}
+
+/**
+ * Average copies of each group seen by each turn with no mulligan: (7 + draws) * copies / deckSize.
+ * Each card is equally likely to be among the seen cards, so the average is linear in the seen count.
+ * There is no line with mulligans, because a count needs a rule for which cards the player keeps.
+ */
+export function averageCopies(inputs: Inputs): AverageRow[] {
+  return drawCounts(inputs).map((draws, i) => ({
+    turn: i + 1,
+    draws,
+    copies: inputs.groups.map((g) => ((HAND + draws) * g.copies) / inputs.deckSize),
+  }));
+}

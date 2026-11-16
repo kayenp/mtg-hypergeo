@@ -188,3 +188,14 @@ export function oracleByTurn(deck: ODeck, sizes: readonly number[], maxDraws: nu
   }
   return out;
 }
+
+/** The average count of each group over every (7 + draws)-card subset of the deck. */
+export function oracleAverageCopies(deck: ODeck, draws: number): Q[] {
+  const cards = buildDeck(deck);
+  const seen = subsets(positions(cards.length), 7 + draws);
+  return deck.groups.map((_, i) => {
+    let total = 0;
+    for (const s of seen) total += count(s.map((p) => cards[p]!), i);
+    return Q.of(total, seen.length);
+  });
+}
