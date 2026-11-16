@@ -79,12 +79,30 @@ The user knows the deck size and the number of copies of each card group.
   Accepted when: 0.39950952 shows as "39.95%", 0.000001 as "<0.01%" and 0.999999 as ">99.99%".
 - **R13** The page shows a chart with the two by-turn lines from 0% to 100%.
   The two lines have different dashes and different markers. A legend names the two lines.
-  The chart has a text description.
-  Accepted when: the chart geometry tests pass, and the description names the two lines with their first and last values.
-- **R14** The page shows these two notes:
-  "The most counts apply to the opening hand only. So turn 1 on the play is not the same number as the opening hand table."
-  "These numbers are exact for this keep rule only. A real keep also depends on the matchup, your curve and the exact cards."
-  Accepted when: the view model gives both notes for each valid input.
+  Under that chart, the page shows a second chart with the average copies of each group by turn (R21).
+  The second chart uses the same turn axis and one scale in cards, from 0 to a round maximum.
+  Each group line has a different colour, dash and marker. A legend names each group as text.
+  If 2 to 4 groups show on a wide chart and the line ends do not touch, the page also writes the names at the line ends.
+  Each chart has a text description.
+  Accepted when: the chart geometry tests pass for one group, six groups, a group with 0 copies and one turn.
+  The description of each chart names each line with its first and last values.
+- **R14** Under the by-turn chart and table, the page shows the part "How to read these numbers".
+  The part has these sections, in this order: "The question", "How the turns work", "The two lines", "What the numbers leave out" and "In short".
+  "The two lines" also gives the current chance that no hand works.
+  "What the numbers leave out" names the most counts, the hand size, the cards on the bottom and late turns in a small deck.
+  The page also shows this note: "These numbers are exact for this keep rule only. A real keep also depends on the matchup, your curve and the exact cards."
+  Accepted when: the view model gives the title, the five sections in order, the four items and the live sentence.
+  The smoke test finds the heading "How to read these numbers" in headless Chrome.
+
+### Average copies
+
+- **R21** For each turn and each group, the page shows the average copies seen with no mulligan: (7 + draws) × copies ÷ deck size.
+  The turns and the draws follow R9.
+  The by-turn table shows one column for each group, with two decimals. The column header is the group name as text.
+  Under the second chart, the page shows: "This is an average over many games. In one game you see a whole number of copies."
+  Accepted when: 24 lands in 60 cards give 2.80 at turn 1 and 4.00 at turn 4 on the play, and 3.20 at turn 1 on the draw.
+  The average agrees within 1e-12 with a brute-force average over each card subset of 9 small decks.
+  The smoke test finds 2.80 in the first by-turn row.
 
 ### Share link
 
@@ -124,3 +142,4 @@ The page shows this deck on the first load: 60 cards; "Lands" with 24 copies, le
 - **Q2** The validation sets no length limit for a group name. The input field and the link decoder stop at 40 characters. Decide if the validation must also refuse a longer name.
 - **Q3** The validation sets no upper limit for a least count or a most count. A large value gives a correct result (0% or no limit), but the owner did not decide on a limit.
 - **Q4** The current rules text for a free first mulligan in multiplayer games is not verified. The page lets the user set the number, so the maths does not depend on it.
+- **Q5** The page shows the average copies with no mulligan only. An average with mulligans needs a rule for the cards that the player keeps (see `docs/decisions/0002-mulligan-model.md`). The owner did not ask for that rule.

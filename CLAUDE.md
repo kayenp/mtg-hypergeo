@@ -22,7 +22,7 @@ Development packages: `typescript`, `@types/node`, `esbuild`. The page ships wit
 - The owner made this project exempt from the yasdd-framework and yas-factory rules on 2026-11-15.
 
 ## Where to read more
-- `docs/spec.md`: what the page does, requirements R1-R20, open questions.
+- `docs/spec.md`: what the page does, requirements R1-R21, open questions.
 - `docs/interface.md`: the share-link format, version 1.
 - `docs/decisions/0001-stack-and-hosting.md`: stack, build, hosting, smoke-test and Chrome facts.
 - `docs/decisions/0002-mulligan-model.md`: the keep rule, the clamp, the by-turn identity, model limits.

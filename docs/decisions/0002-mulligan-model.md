@@ -65,6 +65,13 @@ The calculator uses option 1, with several card groups.
 - Unverified: the current rules text for a free first mulligan in multiplayer. The page lets the owner set
   the number of free mulligans, so the maths does not depend on it.
 
+- The page shows the average copies seen by turn for the no-mulligan line only (owner, 2026-11-16, option A).
+  The value is `(7 + draws) * copies / N`, because each card has the same chance to be among the seen cards.
+  An average with mulligans needs a rule for which cards the player keeps when more than one kept hand meets
+  the goal. For example, with a goal of 2 to 4 lands and 5 lands in the draw, the player can keep 2, 3 or 4.
+  The odds do not depend on that choice, but a count does. The model has no such rule, so the page does not
+  show that average.
+
 ## Limits of the model
 
 A real keep depends on more than counts: the matchup, the mana curve and the exact cards. The numbers are
@@ -75,3 +82,4 @@ exact for this keep rule only. The page says this in plain words.
 - The owner wants a different goal for a later turn (option 2).
 - The owner wants "this card or that card" goals, or groups that overlap.
 - The exact engine and the simulation disagree on an input.
+- The owner wants the average copies with mulligans. That needs a keep-choice rule first.
