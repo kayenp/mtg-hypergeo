@@ -1,4 +1,4 @@
-import { byTurn } from './byTurn.ts';
+import { averageCopies, byTurn } from './byTurn.ts';
 import type { ChartRow } from './chart.ts';
 import { defaultInputs } from './defaults.ts';
 import { formatPercent } from './format.ts';
@@ -40,6 +40,8 @@ export interface TurnViewRow {
   draws: string;
   withMulligan: string;
   noMulligan: string;
+  /** Average copies seen of each group, two decimals. */
+  copies: string[];
 }
 
 export interface Note {
@@ -47,8 +49,27 @@ export interface Note {
   text: string;
 }
 
+export interface ExplainerPart {
+  heading: string;
+  paragraphs: string[];
+  items: string[];
+}
+
+export interface Explainer {
+  title: string;
+  parts: ExplainerPart[];
+}
+
+export interface AverageChart {
+  names: string[];
+  rows: { turn: number; copies: number[] }[];
+}
+
 export interface Results {
   goal: string;
+  explainer: Explainer;
+  averageHeaders: string[];
+  averageChart: AverageChart;
   opening: OpeningRow[];
   fail: string;
   turns: TurnViewRow[];
@@ -79,15 +100,60 @@ export interface SimView {
   overall: string;
 }
 
-export const NOTE_BY_TURN =
-  'By turn, the page counts your hand plus the cards you draw. It asks for at least the least count of each group. ' +
-  'The most counts apply to the opening hand only. So turn 1 on the play is not the same number as the opening hand table.';
-
-export const NOTE_LINES =
-  'With mulligans: you mulligan by the rule above, then draw. No mulligan: you keep any 7 cards, then draw.';
-
 export const NOTE_MODEL =
   'These numbers are exact for this keep rule only. A real keep also depends on the matchup, your curve and the exact cards.';
+
+export const EXPLAINER_TITLE = 'How to read these numbers';
+
+/** The by-turn explainer. Only the live sentence depends on the inputs. */
+function explainer(failText: string): Explainer {
+  return {
+    title: EXPLAINER_TITLE,
+    parts: [
+      {
+        heading: 'The question',
+        paragraphs: [
+          'Each row asks: by this turn, have you seen at least the least count of every card group?',
+          '"Seen" means your kept hand plus every card you drew since. It does not matter if you played the cards or still hold them.',
+        ],
+        items: [],
+      },
+      {
+        heading: 'How the turns work',
+        paragraphs: [
+          'On the play you skip the first draw, so turn N has N - 1 draws. On the draw, turn N has N draws.',
+          'Each turn adds a card, so the numbers can only go up from turn to turn.',
+        ],
+        items: [],
+      },
+      {
+        heading: 'The two lines',
+        paragraphs: [
+          'No mulligan: you always keep your first 7 cards. The number is the chance that those 7 cards plus your draws hold the least counts.',
+          'With mulligans: you follow the keep rule above. If you kept a hand that met the goal, every turn counts as a yes. If every allowed hand failed and you kept the last one anyway, your later draws may still bring the cards you lack.',
+          'The mulligan line is never below the no-mulligan line. The gap is what the mulligans gain you.',
+          `With your inputs, the chance that no hand works is ${failText}.`,
+        ],
+        items: [],
+      },
+      {
+        heading: 'What the numbers leave out',
+        paragraphs: [],
+        items: [
+          'The most counts. They apply to the opening hand only, so turn 1 on the play does not match the opening hand table.',
+          'The hand size. A 5-card hand that meets the goal counts the same as a 7-card hand.',
+          'The cards on the bottom. They are out of reach, so your draws come only from cards you never saw.',
+          'Late turns in a small deck. The table stops when your draws would reach the cards on the bottom.',
+        ],
+      },
+      {
+        heading: 'In short',
+        paragraphs: ['Read a row as "the chance that I have found my key pieces by this turn", not "the chance that my hand is good on this turn".'],
+        items: [],
+      },
+    ],
+  };
+}
 
 export function formFromInputs(inputs: Inputs): FormState {
   return {
@@ -186,20 +252,26 @@ export function buildView(form: FormState): View {
       text: `Your least counts add up to ${chain.clamp.effective}. A smaller hand cannot hold them, so mulligans stop at ${chain.clamp.effective} cards, not ${chain.clamp.requested}.`,
     });
   }
-  notes.push({ kind: 'info', text: NOTE_BY_TURN }, { kind: 'info', text: NOTE_LINES }, { kind: 'info', text: NOTE_MODEL });
+  notes.push({ kind: 'info', text: NOTE_MODEL });
+  const averages = averageCopies(inputs);
+  const fail = formatPercent(chain.pFail);
 
   return {
     errors: {},
     warnings: byField(checked.warnings),
     results: {
       goal: goalText(inputs.groups),
+      explainer: explainer(fail),
+      averageHeaders: inputs.groups.map((g) => g.name),
+      averageChart: { names: inputs.groups.map((g) => g.name), rows: averages.map((a) => ({ turn: a.turn, copies: a.copies })) },
       opening,
-      fail: formatPercent(chain.pFail),
-      turns: rows.map((r) => ({
+      fail,
+      turns: rows.map((r, i) => ({
         turn: String(r.turn),
         draws: String(r.draws),
         withMulligan: formatPercent(r.withMulligan),
         noMulligan: formatPercent(r.noMulligan),
+        copies: averages[i]!.copies.map((c) => c.toFixed(2)),
       })),
       chart: rows.map((r) => ({ turn: r.turn, withMulligan: r.withMulligan, noMulligan: r.noMulligan })),
       notes,

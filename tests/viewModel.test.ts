@@ -54,6 +54,7 @@ test('by-turn rows and chart data match the engine', () => {
     draws: '1',
     withMulligan: `${(rows[0]!.withMulligan * 100).toFixed(2)}%`,
     noMulligan: `${(rows[0]!.noMulligan * 100).toFixed(2)}%`,
+    copies: ['3.20', '0.53'],
   });
   assert.deepEqual(view.results.chart, rows.map((r) => ({ turn: r.turn, withMulligan: r.withMulligan, noMulligan: r.noMulligan })));
 });
@@ -110,14 +111,71 @@ test('least counts above 7 show a warning note', () => {
   assert.ok(view.results.notes.some((n) => n.kind === 'warning' && /more than 7/.test(n.text)));
 });
 
-test('the by-turn note and the model note are always there [R14]', () => {
+test('the model note stays, and the old short by-turn notes are gone [R14]', () => {
   const view = buildView(defaultForm());
   assert.ok(view.results);
   const text = view.results.notes.map((n) => n.text).join(' ');
-  assert.match(text, /most counts apply to the opening hand only/);
-  assert.match(text, /turn 1 on the play/);
   assert.match(text, /exact for this keep rule only/);
   assert.match(text, /matchup/);
+  assert.doesNotMatch(text, /By turn, the page counts/);
+  assert.doesNotMatch(text, /No mulligan: you keep any 7 cards/);
+});
+
+test('the explainer has its title and its parts in order [R14]', () => {
+  const view = buildView(defaultForm());
+  assert.ok(view.results);
+  const ex = view.results.explainer;
+  assert.equal(ex.title, 'How to read these numbers');
+  assert.deepEqual(
+    ex.parts.map((p) => p.heading),
+    ['The question', 'How the turns work', 'The two lines', 'What the numbers leave out', 'In short'],
+  );
+  const part = (h: string) => {
+    const p = ex.parts.find((x) => x.heading === h)!;
+    return [...p.paragraphs, ...p.items].join(' ');
+  };
+  assert.match(part('The question'), /at least the least count of every card group/);
+  assert.match(part('The question'), /kept hand plus every card you drew/);
+  assert.match(part('The question'), /played the cards or still hold them/);
+  assert.match(part('How the turns work'), /turn N has N - 1 draws/);
+  assert.match(part('How the turns work'), /turn N has N draws/);
+  assert.match(part('How the turns work'), /only go up/);
+  assert.match(part('The two lines'), /No mulligan/);
+  assert.match(part('The two lines'), /never below/);
+  assert.match(part('The two lines'), /what the mulligans gain/);
+  const out = ex.parts.find((x) => x.heading === 'What the numbers leave out')!;
+  assert.equal(out.items.length, 4);
+  assert.match(out.items.join(' '), /most counts/);
+  assert.match(out.items.join(' '), /turn 1 on the play/);
+  assert.match(out.items.join(' '), /5-card hand/);
+  assert.match(out.items.join(' '), /bottom/);
+  assert.match(out.items.join(' '), /small deck/);
+  assert.match(part('In short'), /found my key pieces by this turn/);
+});
+
+test('the explainer has one live sentence with the fail chance [R14]', () => {
+  const view = buildView(defaultForm());
+  assert.ok(view.results);
+  const all = view.results.explainer.parts.flatMap((p) => [...p.paragraphs, ...p.items]);
+  assert.ok(all.includes(`With your inputs, the chance that no hand works is ${view.results.fail}.`), all.join(' | '));
+});
+
+test('the by-turn rows carry the average copies per group, two decimals [R21]', () => {
+  const view = buildView(defaultForm());
+  assert.ok(view.results);
+  assert.deepEqual(view.results.averageHeaders, ['Lands', 'Key card']);
+  assert.deepEqual(view.results.turns[0]!.copies, ['2.80', '0.47']);
+  assert.deepEqual(view.results.turns[3]!.copies, ['4.00', '0.67']);
+});
+
+test('the view gives the average chart data, names as given [R21]', () => {
+  const name = '<b>x</b>';
+  const view = buildView({ ...defaultForm(), groups: [{ name, copies: '24', least: '2', most: '' }] });
+  assert.ok(view.results);
+  assert.deepEqual(view.results.averageChart.names, [name]);
+  assert.equal(view.results.averageChart.rows.length, view.results.turns.length);
+  assert.equal(view.results.averageChart.rows[0]!.turn, 1);
+  assert.ok(Math.abs(view.results.averageChart.rows[0]!.copies[0]! - 2.8) < 1e-12);
 });
 
 test('the goal line names each group as given, HTML and all [R20]', () => {

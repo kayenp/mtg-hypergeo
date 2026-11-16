@@ -84,19 +84,26 @@
 
     <section class="card" aria-labelledby="h-turns" id="turns-card">
       <h2 id="h-turns">By turn</h2>
-      <p id="note-turns" class="note"></p>
       <ul class="legend" aria-hidden="true">
         <li><svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="key-with"/><circle cx="14" cy="5" r="4" class="mark-with"/></svg>With mulligans</li>
         <li><svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="key-no"/><rect x="10" y="1" width="8" height="8" class="mark-no"/></svg>No mulligan</li>
       </ul>
       <div id="chart" class="chart"></div>
+      <div id="avg-panel">
+        <h3 class="panel-title">Average copies seen by turn (no mulligan)</h3>
+        <p class="hint">The scale on the left counts cards.</p>
+        <ul id="avg-legend" class="legend" aria-label="Groups in the chart"></ul>
+        <div id="avg-chart" class="chart"></div>
+        <p class="note">This is an average over many games. In one game you see a whole number of copies.</p>
+      </div>
       <div class="table-wrap">
         <table id="turns">
-          <caption>Chance to hold at least the least count of each group, by turn</caption>
+          <caption>Chance and average copies, by turn</caption>
           <thead><tr><th scope="col">Turn</th><th scope="col">Cards drawn</th><th scope="col">With mulligans</th><th scope="col">No mulligan</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
+      <section id="explainer" class="explainer" aria-label="How to read these numbers"></section>
       <p id="note-model" class="note"></p>
     </section>
 

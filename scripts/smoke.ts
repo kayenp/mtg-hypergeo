@@ -78,10 +78,19 @@ check(
 check(/<div id="link-banner"[^>]*\shidden/.test(plain), 'no link banner on a good link');
 
 // [R20] A name with HTML must stay text.
+// [R14] [R21] The explainer and the average copies show for 24 lands in 60 on the play.
+const lands = dumpDom(chrome, `v=1&n=60&g=24.2.4.Lands&${tail}`);
+check(/<h3[^>]*>How to read these numbers<\/h3>/.test(lands), 'the heading "How to read these numbers" shows');
+check(
+  /<table id="turns">[\s\S]*?<tbody><tr><th scope="row">1<\/th><td>0<\/td><td>[^<]*<\/td><td>[^<]*<\/td><td>2\.80<\/td>/.test(lands),
+  'the first by-turn row shows 2.80 average lands',
+);
+
 const evil = '<img src=x onerror=alert(1)>';
 const xss = dumpDom(chrome, `v=1&n=60&g=4.1..${encodeURIComponent(evil)}&${tail}`);
 check(!/<img\b[^>]*\bsrc="?x/i.test(xss), 'a group name with HTML makes no img element');
 check(xss.includes('&lt;img src=x onerror=alert(1)&gt;'), 'the group name shows as text');
+check(/<th[^>]*scope="col"[^>]*>&lt;img src=x onerror=alert\(1\)&gt;<\/th>/.test(xss), 'the group name shows as text in the table header');
 
 const bad = dumpDom(chrome, `v=1&n=abc&g=4.1..A&${tail}`);
 check(/<div id="link-banner"(?![^>]*\shidden)[^>]*>/.test(bad) && bad.includes('deck size'), 'a bad link shows the banner and names the field');
