@@ -1,0 +1,21 @@
+{
+  "name": "mtg-hypergeo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hypergeometric calculator for Magic: The Gathering with the London mulligan",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "check-node": "node scripts/check-node.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test 'tests/**/*.test.ts'",
+    "check": "npm run check-node && npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
+  }
+}
