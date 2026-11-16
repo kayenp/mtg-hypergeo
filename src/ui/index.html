@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Opening hand odds</title>
+<!--STYLE-->
+</head>
+<body>
+<header class="top">
+  <h1>Opening hand odds</h1>
+  <p class="lede">How often do you get a hand you want to keep? This page counts it exactly, with the London mulligan: after each mulligan you draw 7 new cards, then put 1 card on the bottom for each mulligan.</p>
+</header>
+
+<div id="link-banner" class="banner" role="alert" hidden>
+  <p class="banner-title">Part of the link could not be used.</p>
+  <ul id="link-issues"></ul>
+</div>
+
+<main class="layout">
+  <form id="inputs" class="inputs" novalidate>
+    <section class="card" aria-labelledby="h-deck">
+      <h2 id="h-deck">Deck</h2>
+      <div class="field">
+        <label for="deckSize">Cards in the deck</label>
+        <input id="deckSize" inputmode="numeric" autocomplete="off" aria-describedby="msg-deckSize">
+        <p class="msg" id="msg-deckSize"></p>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-groups">
+      <h2 id="h-groups">Card groups</h2>
+      <p class="hint">A group is a set of cards you count, such as lands. Say how many copies the deck has, and how many you want in your opening hand. Leave "At most" empty for no limit.</p>
+      <div id="groups"></div>
+      <p class="msg" id="msg-groups"></p>
+      <button type="button" id="add-group" class="secondary">Add a group</button>
+    </section>
+
+    <section class="card" aria-labelledby="h-mull">
+      <h2 id="h-mull">Mulligans and turns</h2>
+      <div class="field">
+        <label for="minHand">Smallest hand you will keep</label>
+        <input id="minHand" inputmode="numeric" autocomplete="off" aria-describedby="msg-minHand">
+        <p class="msg" id="msg-minHand"></p>
+      </div>
+      <div class="field">
+        <label for="freeMulligans">Free mulligans</label>
+        <input id="freeMulligans" inputmode="numeric" autocomplete="off" aria-describedby="hint-free msg-freeMulligans">
+        <p class="hint" id="hint-free">A free mulligan still gives you 7 cards. Many Commander games give you 1.</p>
+        <p class="msg" id="msg-freeMulligans"></p>
+      </div>
+      <fieldset class="field choice">
+        <legend>Who goes first?</legend>
+        <label><input type="radio" name="otp" id="onPlay" value="play"> On the play (no draw on turn 1)</label>
+        <label><input type="radio" name="otp" id="onDraw" value="draw"> On the draw</label>
+        <p class="msg" id="msg-onPlay"></p>
+      </fieldset>
+      <div class="field">
+        <label for="maxTurn">Turns to show</label>
+        <input id="maxTurn" inputmode="numeric" autocomplete="off" aria-describedby="msg-maxTurn">
+        <p class="msg" id="msg-maxTurn"></p>
+      </div>
+    </section>
+  </form>
+
+  <div class="results">
+    <section class="card" aria-labelledby="h-open">
+      <h2 id="h-open">Opening hand</h2>
+      <p id="invalid" class="invalid" hidden>Fix the marked fields to see the odds.</p>
+      <div id="result-body">
+        <p id="goal" class="goal"></p>
+        <div id="notes-top"></div>
+        <div class="table-wrap">
+          <table id="opening">
+            <caption>Your chance at each mulligan</caption>
+            <thead><tr><th scope="col">Mulligans</th><th scope="col">Hand size</th><th scope="col">This draw works</th><th scope="col">You keep here</th><th scope="col">Kept so far</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="fail">Chance that no hand works, so you keep the last one anyway: <strong id="fail"></strong></p>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-turns" id="turns-card">
+      <h2 id="h-turns">By turn</h2>
+      <p id="note-turns" class="note"></p>
+      <ul class="legend" aria-hidden="true">
+        <li><svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="key-with"/><circle cx="14" cy="5" r="4" class="mark-with"/></svg>With mulligans</li>
+        <li><svg width="28" height="10" viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="key-no"/><rect x="10" y="1" width="8" height="8" class="mark-no"/></svg>No mulligan</li>
+      </ul>
+      <div id="chart" class="chart"></div>
+      <div class="table-wrap">
+        <table id="turns">
+          <caption>Chance to hold at least the least count of each group, by turn</caption>
+          <thead><tr><th scope="col">Turn</th><th scope="col">Cards drawn</th><th scope="col">With mulligans</th><th scope="col">No mulligan</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p id="note-model" class="note"></p>
+    </section>
+
+    <section class="card" aria-labelledby="h-sim">
+      <h2 id="h-sim">Check with a simulation</h2>
+      <p class="hint">The page can also shuffle and draw for real, many times, and compare the result with the exact numbers above. This is a second check on the maths.</p>
+      <div class="row">
+        <div class="field">
+          <label for="trials">Trials</label>
+          <input id="trials" inputmode="numeric" autocomplete="off" aria-describedby="msg-trials">
+          <p class="msg" id="msg-trials"></p>
+        </div>
+        <div class="field">
+          <label for="seed">Seed</label>
+          <input id="seed" inputmode="numeric" autocomplete="off" aria-describedby="hint-seed msg-seed">
+          <p class="hint" id="hint-seed">The same seed gives the same shuffles.</p>
+          <p class="msg" id="msg-seed"></p>
+        </div>
+      </div>
+      <button type="button" id="run-sim">Run simulation</button>
+      <p id="sim-progress" class="progress" aria-live="polite"></p>
+      <div id="sim-result" hidden>
+        <p id="sim-overall" class="overall"></p>
+        <div class="table-wrap">
+          <table id="sim">
+            <caption>Exact against simulated</caption>
+            <thead><tr><th scope="col">Number</th><th scope="col">Exact</th><th scope="col">Simulated</th><th scope="col">Standard error</th><th scope="col">Result</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-share">
+      <h2 id="h-share">Share</h2>
+      <p class="hint">The link holds all your inputs. It works from a saved copy of this page too.</p>
+      <button type="button" id="copy-link">Copy link</button>
+      <label for="link-text" id="link-label" hidden>Copy this link</label>
+      <input id="link-text" readonly hidden>
+      <p id="copy-status" aria-live="polite"></p>
+    </section>
+  </div>
+</main>
+<!--SCRIPT-->
+</body>
+</html>
